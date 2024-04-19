@@ -1,0 +1,3 @@
+C:/Users/thale/CLionProjects/ProjetoAPAGuloso/cmake-build-debug/CMakeFiles/ProjetoAPAGuloso.dir
+C:/Users/thale/CLionProjects/ProjetoAPAGuloso/cmake-build-debug/CMakeFiles/edit_cache.dir
+C:/Users/thale/CLionProjects/ProjetoAPAGuloso/cmake-build-debug/CMakeFiles/rebuild_cache.dir
