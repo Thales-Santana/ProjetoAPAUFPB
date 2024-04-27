@@ -1,4 +1,36 @@
+#include <unordered_map>
 #include "Job.h"
+
+int encontrarCusto(const std::vector<std::vector<Job>>& matriz, int valor, int index) {
+    // Iterar sobre cada linha da matriz
+    for (size_t j = 0; j < matriz[index].size(); ++j) {
+        // Se o valor for encontrado, retornar as coordenadas (i, j)
+        if (matriz[index][j].id == valor) {
+            return matriz[index][j].custo;
+        }
+    }
+}
+
+int calcularCustoTotal(const std::vector<std::vector<Job>>& matriz,
+                       const std::vector<std::vector<Job>>& alocados, int p) {
+    int somaCusto = 0;
+    int totalElementos = 0;
+
+    for (const auto& linha : alocados) {
+        totalElementos += linha.size();
+    }
+
+    // Penaliza por elementos não alocados
+    somaCusto += (matriz[0].size() - totalElementos) * p;
+
+    for (int i = 0; i < alocados.size(); ++i) {
+        for (int j = 0; j < alocados[i].size(); ++j) {
+            somaCusto += encontrarCusto(matriz, alocados[i][j].id, i);
+        }
+    }
+
+    return somaCusto;
+}
 
 void lerArquivo(const std::string& nomeArquivo, std::vector<int>& capacidades, std::vector<std::vector<Job>>& matrizJob, int& p) {
     std::ifstream arquivo(nomeArquivo);
@@ -36,10 +68,9 @@ void lerArquivo(const std::string& nomeArquivo, std::vector<int>& capacidades, s
                 std::cerr << "Erro ao ler a matriz na posição (" << i + 1 << ", " << j + 1 << ")." << std::endl;
                 exit(1);
             }
-            matrizJob[i][j].razao = static_cast<double>(matrizJob[i][j].custo) / static_cast<double>(matrizJob[i][j].tempo_processamento);
+            matrizJob[i][j].somaCustoTempo = matrizJob[0][j].custo + matrizJob[0][j].tempo_processamento;
         }
     }
 
     arquivo.close();
 }
-
