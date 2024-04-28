@@ -9,27 +9,38 @@ int encontrarCusto(const std::vector<std::vector<Job>>& matriz, int valor, int i
             return matriz[index][j].custo;
         }
     }
+    return -1;
 }
 
 int calcularCustoTotal(const std::vector<std::vector<Job>>& matriz,
-                       const std::vector<std::vector<Job>>& alocados, int p) {
-    int somaCusto = 0;
-    int totalElementos = 0;
+                     const std::vector<std::vector<Job>>& alocados, int p) {
+  int somaCusto = 0;
+  int totalElementos = 0;
 
-    for (const auto& linha : alocados) {
-        totalElementos += linha.size();
+  // Count allocated elements and print
+  for (const auto& linha : alocados) {
+    totalElementos += linha.size();
+  }
+  std::cout << "** Total allocated elements: " << totalElementos << " **" << std::endl;
+
+  // Calculate penalty for unallocated elements and print
+  somaCusto += (matriz[0].size() - totalElementos) * p;
+  std::cout << "** Penalty for unallocated elements: " << (matriz[0].size() - totalElementos) * p << " **" << std::endl;
+
+  // Iterate through allocated jobs and calculate processing time
+  for (int i = 0; i < alocados.size(); ++i) {
+    for (int j = 0; j < alocados[i].size(); ++j) {
+      int custoJob = encontrarCusto(matriz, alocados[i][j].id, i);
+      somaCusto += custoJob;
+      std::cout << "  - Server " << i << ", Job " << j << ": Processing Time = " << custoJob << std::endl;
+      // Check for potential errors from encontrarCusto (replace -1 with appropriate error value)
+      if (custoJob == -1) {
+          std::cerr << "Error: Job " << alocados[i][j].id << " not found in server " << i << std::endl;
+      }
     }
+  }
 
-    // Penaliza por elementos não alocados
-    somaCusto += (matriz[0].size() - totalElementos) * p;
-
-    for (int i = 0; i < alocados.size(); ++i) {
-        for (int j = 0; j < alocados[i].size(); ++j) {
-            somaCusto += encontrarCusto(matriz, alocados[i][j].id, i);
-        }
-    }
-
-    return somaCusto;
+  return somaCusto;
 }
 
 void lerArquivo(const std::string& nomeArquivo, std::vector<int>& capacidades, std::vector<std::vector<Job>>& matrizJob, int& p) {
