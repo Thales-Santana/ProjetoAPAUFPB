@@ -22,7 +22,6 @@ int calcularCustoTotal(const std::vector<std::vector<Job>>& matriz,
 
     // Penaliza por elementos não alocados
     somaCusto += (matriz[0].size() - totalElementos) * p;
-
     for (int i = 0; i < alocados.size(); ++i) {
         for (int j = 0; j < alocados[i].size(); ++j) {
             somaCusto += encontrarCusto(matriz, alocados[i][j].id, i);
@@ -68,9 +67,46 @@ void lerArquivo(const std::string& nomeArquivo, std::vector<int>& capacidades, s
                 std::cerr << "Erro ao ler a matriz na posição (" << i + 1 << ", " << j + 1 << ")." << std::endl;
                 exit(1);
             }
-            matrizJob[i][j].somaCustoTempo = matrizJob[0][j].custo + matrizJob[0][j].tempo_processamento;
         }
     }
 
     arquivo.close();
+}
+
+bool encontrarNoVetor(const std::vector<int>& vetor, int x) {
+    // Verifica se o vetor está vazio
+    if (vetor.empty()) {
+        return false;
+    }
+
+    // Percorre cada elemento do vetor
+    for (int elemento : vetor) {
+        // Compara o elemento atual com o valor buscado
+        if (elemento == x) {
+            return true; // Valor encontrado!
+        }
+    }
+
+    // Valor não encontrado
+    return false;
+}
+
+void alocarJobs(std::vector<std::vector<Job>>& matriz, const std::vector<int>& capacidades, std::vector<std::vector<Job>>& jobsAlocados){
+    int num_linhas = matriz.size();
+    int num_colunas = matriz[0].size();
+    std::vector<int> vetor_aux;
+    jobsAlocados.resize(num_linhas);
+    bool existe_no_vetor;
+
+    for (int i = 0; i < num_linhas; ++i) {
+        int capacidade_atual = capacidades[i];
+        for (int j = 0; j < num_colunas; ++j) {
+            existe_no_vetor = encontrarNoVetor(vetor_aux, matriz[i][j].id);
+            if (matriz[i][j].tempo_processamento <= capacidade_atual && !existe_no_vetor) {
+                capacidade_atual -= matriz[i][j].tempo_processamento;
+                jobsAlocados[i].push_back(matriz[i][j]);
+                vetor_aux.push_back(matriz[i][j].id);
+            }
+        }
+    }
 }

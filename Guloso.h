@@ -5,6 +5,6 @@
 
 struct Job;
 
-void preencherMatriz(std::vector<std::vector<Job>>& matriz, const std::vector<int>& capacidades, std::vector<std::vector<Job>>& jobsAlocados);
+void ordenacaoGuloso(std::vector<std::vector<Job>>& matriz);
 
 #endif // GULOSO_H
