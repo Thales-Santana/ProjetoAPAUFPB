@@ -9,16 +9,19 @@ int encontrarCusto(const std::vector<std::vector<Job>>& matriz, int valor, int i
             return matriz[index][j].custo;
         }
     }
+    return -1;
 }
 
 int calcularCustoTotal(const std::vector<std::vector<Job>>& matriz,
-                       const std::vector<std::vector<Job>>& alocados, int p) {
-    int somaCusto = 0;
-    int totalElementos = 0;
+                     const std::vector<std::vector<Job>>& alocados, int p) {
+  int somaCusto = 0;
+  int totalElementos = 0;
 
-    for (const auto& linha : alocados) {
-        totalElementos += linha.size();
-    }
+  // Count allocated elements and print
+  for (const auto& linha : alocados) {
+    totalElementos += linha.size();
+  }
+  std::cout << "** Total allocated elements: " << totalElementos << " **" << std::endl;
 
     // Penaliza por elementos não alocados
     somaCusto += (matriz[0].size() - totalElementos) * p;
@@ -27,8 +30,9 @@ int calcularCustoTotal(const std::vector<std::vector<Job>>& matriz,
             somaCusto += encontrarCusto(matriz, alocados[i][j].id, i);
         }
     }
+  }
 
-    return somaCusto;
+  return somaCusto;
 }
 
 void lerArquivo(const std::string& nomeArquivo, std::vector<int>& capacidades, std::vector<std::vector<Job>>& matrizJob, int& p) {
