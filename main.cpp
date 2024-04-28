@@ -4,6 +4,8 @@
 #include "Guloso.h"
 #include <algorithm>
 #include <iomanip>
+#include <limits>
+#include <numeric>
 
 void imprimirMatriz(const std::vector<std::vector<Job>>& matriz) {
     for (const auto& linha : matriz) {
@@ -22,19 +24,31 @@ void imprimirMatrizInt(const std::vector<std::vector<Job>>& matriz) {
     }
 }
 
-void swap(std::vector<std::vector<Job>>& matriz, int p) {
+void swap(std::vector<std::vector<Job>> &matriz, const std::vector<int> &capacidades, int p)
+{
     int num_servidores = matriz.size();
 
     double melhor_custo = std::numeric_limits<double>::max(); // Inicializa com um valor grande
-    std::vector<std::vector<Job>> melhores_matriz= matriz;
+    std::vector<std::vector<Job>> melhores_matriz = matriz;
 
     // Itera através de todas as combinações possíveis de troca de dois jobs entre diferentes servidores
-    for (int servidor1 = 0; servidor1 < num_servidores; ++servidor1) {
-        for (int job1 = 0; job1 < matriz[servidor1].size(); ++job1) {
-            for (int servidor2 = 0; servidor2 < num_servidores; ++servidor2) {
-                for (int job2 = 0; job2 < matriz[servidor2].size(); ++job2) {
-                    // Verifica se a troca desses jobs é viável
-                    if (servidor1 != servidor2) {
+    for (int servidor1 = 0; servidor1 < num_servidores; ++servidor1)
+    {
+        for (int job1 = 0; job1 < matriz[servidor1].size(); ++job1)
+        {
+            for (int servidor2 = 0; servidor2 < num_servidores; ++servidor2)
+            {
+                for (int job2 = 0; job2 < matriz[servidor2].size(); ++job2)
+                {
+                    // Verifica se a troca desses jobs é viável e respeita a capacidade
+                    if (servidor1 != servidor2 &&
+                        matriz[servidor2].size() < matriz[servidor1].size() &&
+                        std::accumulate(matriz[servidor2].begin(), matriz[servidor2].end(), 0,
+                                        [](int sum, const Job &job)
+                                        { return sum + job.tempo_processamento; }) +
+                                matriz[servidor1][job1].tempo_processamento <=
+                            capacidades[servidor2])
+                    {
                         std::swap(matriz[servidor1][job1], matriz[servidor2][job2]);
 
                         // Calcula o custo total da nova solução
@@ -43,7 +57,7 @@ void swap(std::vector<std::vector<Job>>& matriz, int p) {
                         // Verifica se a nova solução é melhor do que a melhor encontrada até agora
                         if (custo_atual < melhor_custo) {
                             melhor_custo = custo_atual;
-                            melhores_matriz= matriz;
+                            melhores_matriz = matriz;
                         }
 
                         // Reverte a troca
@@ -57,7 +71,9 @@ void swap(std::vector<std::vector<Job>>& matriz, int p) {
     // Atualiza as matrizes originais com a melhor solução encontrada
     matriz = melhores_matriz;
 }
-void swapIntra(std::vector<std::vector<Job>>& matriz, const std::vector<int>& capacidades,  int p) {
+
+void swapIntra(std::vector<std::vector<Job>> &matriz, const std::vector<int> &capacidades, int p)
+{
     int num_servidores = matriz.size();
     std::vector<std::vector<Job>> jobsAlocados;
     alocarJobs(matriz, capacidades, jobsAlocados);
@@ -89,8 +105,9 @@ void swapIntra(std::vector<std::vector<Job>>& matriz, const std::vector<int>& ca
     matriz = melhores_matriz;
 }
 
-int main() {
-    std::string nomeArquivo = "C://Users//thale//CLionProjects//ProjetoAPAGuloso//file.txt";
+int main()
+{
+    std::string nomeArquivo = "file.txt";
 
     std::vector<int> arrayB;
     std::vector<std::vector<Job>> matrizJob;
@@ -121,7 +138,7 @@ int main() {
     std::cout << std::endl;
     imprimirMatrizInt(jobsAlocados);
     std::cout << std::endl;
-    std::cout << "Custo:"<< std::endl;
-    std::cout << calcularCustoTotal(matrizJob,jobsAlocados,custo_fixo);
+    std::cout << "Custo:" << std::endl;
+    std::cout << calcularCustoTotal(matrizJob, jobsAlocados, custo_fixo);
     return 0;
 }

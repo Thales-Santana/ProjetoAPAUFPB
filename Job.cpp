@@ -9,6 +9,7 @@ int encontrarCusto(const std::vector<std::vector<Job>>& matriz, int valor, int i
             return matriz[index][j].custo;
         }
     }
+    return -1;
 }
 
 int calcularCustoTotal(const std::vector<std::vector<Job>>& matriz,
