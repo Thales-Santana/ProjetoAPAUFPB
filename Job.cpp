@@ -23,20 +23,12 @@ int calcularCustoTotal(const std::vector<std::vector<Job>>& matriz,
   }
   std::cout << "** Total allocated elements: " << totalElementos << " **" << std::endl;
 
-  // Calculate penalty for unallocated elements and print
-  somaCusto += (matriz[0].size() - totalElementos) * p;
-  std::cout << "** Penalty for unallocated elements: " << (matriz[0].size() - totalElementos) * p << " **" << std::endl;
-
-  // Iterate through allocated jobs and calculate processing time
-  for (int i = 0; i < alocados.size(); ++i) {
-    for (int j = 0; j < alocados[i].size(); ++j) {
-      int custoJob = encontrarCusto(matriz, alocados[i][j].id, i);
-      somaCusto += custoJob;
-      std::cout << "  - Server " << i << ", Job " << j << ": Processing Time = " << custoJob << std::endl;
-      // Check for potential errors from encontrarCusto (replace -1 with appropriate error value)
-      if (custoJob == -1) {
-          std::cerr << "Error: Job " << alocados[i][j].id << " not found in server " << i << std::endl;
-      }
+    // Penaliza por elementos não alocados
+    somaCusto += (matriz[0].size() - totalElementos) * p;
+    for (int i = 0; i < alocados.size(); ++i) {
+        for (int j = 0; j < alocados[i].size(); ++j) {
+            somaCusto += encontrarCusto(matriz, alocados[i][j].id, i);
+        }
     }
   }
 
@@ -79,9 +71,46 @@ void lerArquivo(const std::string& nomeArquivo, std::vector<int>& capacidades, s
                 std::cerr << "Erro ao ler a matriz na posição (" << i + 1 << ", " << j + 1 << ")." << std::endl;
                 exit(1);
             }
-            matrizJob[i][j].somaCustoTempo = matrizJob[0][j].custo + matrizJob[0][j].tempo_processamento;
         }
     }
 
     arquivo.close();
+}
+
+bool encontrarNoVetor(const std::vector<int>& vetor, int x) {
+    // Verifica se o vetor está vazio
+    if (vetor.empty()) {
+        return false;
+    }
+
+    // Percorre cada elemento do vetor
+    for (int elemento : vetor) {
+        // Compara o elemento atual com o valor buscado
+        if (elemento == x) {
+            return true; // Valor encontrado!
+        }
+    }
+
+    // Valor não encontrado
+    return false;
+}
+
+void alocarJobs(std::vector<std::vector<Job>>& matriz, const std::vector<int>& capacidades, std::vector<std::vector<Job>>& jobsAlocados){
+    int num_linhas = matriz.size();
+    int num_colunas = matriz[0].size();
+    std::vector<int> vetor_aux;
+    jobsAlocados.resize(num_linhas);
+    bool existe_no_vetor;
+
+    for (int i = 0; i < num_linhas; ++i) {
+        int capacidade_atual = capacidades[i];
+        for (int j = 0; j < num_colunas; ++j) {
+            existe_no_vetor = encontrarNoVetor(vetor_aux, matriz[i][j].id);
+            if (matriz[i][j].tempo_processamento <= capacidade_atual && !existe_no_vetor) {
+                capacidade_atual -= matriz[i][j].tempo_processamento;
+                jobsAlocados[i].push_back(matriz[i][j]);
+                vetor_aux.push_back(matriz[i][j].id);
+            }
+        }
+    }
 }

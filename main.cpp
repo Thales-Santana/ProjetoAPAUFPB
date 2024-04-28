@@ -4,15 +4,11 @@
 #include "Guloso.h"
 #include <algorithm>
 #include <iomanip>
-#include <limits>
 
-void imprimirMatriz(const std::vector<std::vector<Job>> &matriz)
-{
-    for (const auto &linha : matriz)
-    {
-        for (const auto &job : linha)
-        {
-            std::cout << "Job(" << job.id << "): " << std::fixed << std::setprecision(2) << job.somaCustoTempo << " | " << job.tempo_processamento << " | " << job.custo << "\n";
+void imprimirMatriz(const std::vector<std::vector<Job>>& matriz) {
+    for (const auto& linha : matriz) {
+        for (const auto& job : linha) {
+            std::cout << "Job(" << job.id << "): "  << job.tempo_processamento << " | " << job.custo << "\n";
         }
     }
 }
@@ -70,38 +66,31 @@ void insertTask(std::vector<std::vector<Job>> &jobsAlocados, int server, int ori
 void swap(std::vector<std::vector<Job>> &matriz, std::vector<std::vector<Job>> &jobsAlocados, int p)
 {
     int num_servidores = matriz.size();
-    int num_jobs = matriz[0].size();
 
     double melhor_custo = std::numeric_limits<double>::max(); // Inicializa com um valor grande
-    std::vector<std::vector<Job>> melhores_jobsAlocados = jobsAlocados;
+    std::vector<std::vector<Job>> melhores_matriz= matriz;
 
     // Itera através de todas as combinações possíveis de troca de dois jobs entre diferentes servidores
-    for (int servidor1 = 0; servidor1 < num_servidores; ++servidor1)
-    {
-        for (int job1 = 0; job1 < jobsAlocados[servidor1].size(); ++job1)
-        {
-            for (int servidor2 = 0; servidor2 < num_servidores; ++servidor2)
-            {
-                for (int job2 = 0; job2 < jobsAlocados[servidor2].size(); ++job2)
-                {
+    for (int servidor1 = 0; servidor1 < num_servidores; ++servidor1) {
+        for (int job1 = 0; job1 < matriz[servidor1].size(); ++job1) {
+            for (int servidor2 = 0; servidor2 < num_servidores; ++servidor2) {
+                for (int job2 = 0; job2 < matriz[servidor2].size(); ++job2) {
                     // Verifica se a troca desses jobs é viável
-                    if (servidor1 != servidor2)
-                    {
-                        // Realiza a troca dos jobs
-                        std::swap(jobsAlocados[servidor1][job1], jobsAlocados[servidor2][job2]);
+                    if (servidor1 != servidor2) {
+                        std::swap(matriz[servidor1][job1], matriz[servidor2][job2]);
 
                         // Calcula o custo total da nova solução
-                        double custo_atual = calcularCustoTotal(matriz, jobsAlocados, p);
+                        double custo_atual = calcularCustoTotal(matriz, matriz, p);
 
                         // Verifica se a nova solução é melhor do que a melhor encontrada até agora
                         if (custo_atual < melhor_custo)
                         {
                             melhor_custo = custo_atual;
-                            melhores_jobsAlocados = jobsAlocados;
+                            melhores_matriz= matriz;
                         }
 
                         // Reverte a troca
-                        std::swap(jobsAlocados[servidor1][job1], jobsAlocados[servidor2][job2]);
+                        std::swap(matriz[servidor1][job1], matriz[servidor2][job2]);
                     }
                 }
             }
@@ -109,7 +98,38 @@ void swap(std::vector<std::vector<Job>> &matriz, std::vector<std::vector<Job>> &
     }
 
     // Atualiza as matrizes originais com a melhor solução encontrada
-    jobsAlocados = melhores_jobsAlocados;
+    matriz = melhores_matriz;
+}
+void swapIntra(std::vector<std::vector<Job>>& matriz, const std::vector<int>& capacidades,  int p) {
+    int num_servidores = matriz.size();
+    std::vector<std::vector<Job>> jobsAlocados;
+    alocarJobs(matriz, capacidades, jobsAlocados);
+    int melhor_custo = calcularCustoTotal(matriz, jobsAlocados, p);
+    std::vector<std::vector<Job>> melhores_matriz = matriz;
+
+    // Itera através de todas as combinações possíveis de troca de dois jobs entre diferentes servidores
+    for (int i = 0; i < matriz[0].size(); ++i) {
+        for (int j = i; j < matriz[0].size() - 1; ++j) {
+            for (int k = 0; k < num_servidores; ++k) {
+                std::swap(matriz[k][i], matriz[k][j+1]);
+            }
+            alocarJobs(matriz, capacidades, jobsAlocados);
+            int custo_atual = calcularCustoTotal(matriz, jobsAlocados, p);
+
+            // Verifica se a nova solução é melhor do que a melhor encontrada até agora
+            if (custo_atual < melhor_custo) {
+                melhor_custo = custo_atual;
+                melhores_matriz = matriz;
+            } else {
+                for (int k = 0; k < num_servidores; ++k) {
+                    std::swap(matriz[k][i], matriz[k][j+1]);
+                }
+            }
+        }
+    }
+
+    // Atualiza as matrizes originais com a melhor solução encontrada
+    matriz = melhores_matriz;
 }
 
 int main()
@@ -130,10 +150,13 @@ int main()
     }
     std::cout << std::endl;
 
-    preencherMatriz(matrizJob, arrayB, jobsAlocados);
-
+    ordenacaoGuloso(matrizJob);
+    imprimirMatriz(matrizJob);
     // Realiza a operação de troca para explorar a vizinhança
-    swap(matrizJob, jobsAlocados, custo_fixo);
+
+    swapIntra(matrizJob, arrayB, custo_fixo);
+    alocarJobs(matrizJob, arrayB, jobsAlocados);
+    // swap(jobsAlocados, custo_fixo);
 
     // Print results after swap
     imprimirMatriz(matrizJob);
@@ -152,6 +175,9 @@ int main()
 
     // Print results after insertion exploration
     imprimirMatriz(matrizJob);
+    std::cout << std::endl;
+    imprimirMatrizInt(matrizJob);
+
     std::cout << std::endl;
     imprimirMatrizInt(jobsAlocados);
     std::cout << std::endl;
