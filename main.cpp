@@ -15,13 +15,54 @@ void imprimirMatriz(const std::vector<std::vector<Job>>& matriz) {
     }
 }
 
-void imprimirMatrizInt(const std::vector<std::vector<Job>>& matriz) {
-    for (int i = 0; i < matriz.size(); ++i) {
-        for (int j = 0; j < matriz[i].size(); ++j) {
+void imprimirMatrizInt(const std::vector<std::vector<Job>> &matriz)
+{
+    for (int i = 0; i < matriz.size(); ++i)
+    {
+        for (int j = 0; j < matriz[i].size(); ++j)
+        {
             std::cout << " " << matriz[i][j].id << " ";
         }
         std::cout << std::endl;
     }
+}
+
+void insertTask(std::vector<std::vector<Job>> &jobsAlocados, int server, int origin, int p)
+{
+    // Save the original task for later restoration
+    Job originalTask = jobsAlocados[server][origin];
+
+    // Initialize best cost and best jobs allocated (assuming positive cost)
+    int bestCost = std::numeric_limits<int>::max();
+    std::vector<std::vector<Job>> bestJobsAlocados = jobsAlocados;
+
+    // Perform task insertion at all possible positions within the same server
+    for (int destination = 0; destination < jobsAlocados[server].size(); ++destination)
+    {
+        if (destination != origin)
+        {
+            // Move the task to the specified destination
+            std::swap(jobsAlocados[server][origin], jobsAlocados[server][destination]);
+
+            int totalCost = calcularCustoTotal(jobsAlocados, jobsAlocados, p);
+
+            // Update the best solution if the new cost is better
+            if (totalCost < bestCost)
+            {
+                bestCost = totalCost;
+                bestJobsAlocados = jobsAlocados;
+            }
+
+            // Revert the task insertion to explore the next position
+            std::swap(jobsAlocados[server][origin], jobsAlocados[server][destination]);
+        }
+    }
+
+    // Restore the original task arrangement
+    jobsAlocados[server][origin] = originalTask;
+
+    // Update the actual jobs allocated with the best solution found
+    jobsAlocados = bestJobsAlocados;
 }
 
 void swap(std::vector<std::vector<Job>> &matriz, const std::vector<int> &capacidades, int p)
@@ -55,7 +96,8 @@ void swap(std::vector<std::vector<Job>> &matriz, const std::vector<int> &capacid
                         double custo_atual = calcularCustoTotal(matriz, matriz, p);
 
                         // Verifica se a nova solução é melhor do que a melhor encontrada até agora
-                        if (custo_atual < melhor_custo) {
+                        if (custo_atual < melhor_custo)
+                        {
                             melhor_custo = custo_atual;
                             melhores_matriz = matriz;
                         }
@@ -117,7 +159,8 @@ int main()
     lerArquivo(nomeArquivo, arrayB, matrizJob, custo_fixo);
 
     std::cout << "Capacidades:" << std::endl;
-    for (int val : arrayB) {
+    for (int val : arrayB)
+    {
         std::cout << val << " ";
     }
     std::cout << std::endl;
@@ -130,7 +173,22 @@ int main()
     alocarJobs(matrizJob, arrayB, jobsAlocados);
     // swap(jobsAlocados, custo_fixo);
 
-    // Imprime o resultado
+    // Print results after swap
+    imprimirMatriz(matrizJob);
+    std::cout << std::endl;
+    imprimirMatrizInt(jobsAlocados);
+    std::cout << std::endl;
+    int costAfterSwap = calcularCustoTotal(matrizJob, jobsAlocados, custo_fixo);
+
+    for (int server = 0; server < jobsAlocados.size(); ++server)
+    {
+        for (int origin = 0; origin < jobsAlocados[server].size(); ++origin)
+        {
+            insertTask(jobsAlocados, server, origin, custo_fixo);
+        }
+    }
+
+    // Print results after insertion exploration
     imprimirMatriz(matrizJob);
     std::cout << std::endl;
     imprimirMatrizInt(matrizJob);
@@ -138,7 +196,9 @@ int main()
     std::cout << std::endl;
     imprimirMatrizInt(jobsAlocados);
     std::cout << std::endl;
+
     std::cout << "Custo:" << std::endl;
     std::cout << calcularCustoTotal(matrizJob, jobsAlocados, custo_fixo);
+
     return 0;
 }
